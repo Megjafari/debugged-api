@@ -1,0 +1,37 @@
+name: CI
+
+# Triggers — när workflowen ska köras
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      # Hämta koden
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Installera .NET 10 SDK
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # Återställ NuGet-paket — separat steg ger bättre cache och tydligare loggar
+      - name: Restore dependencies
+        run: dotnet restore
+
+      # Bygg i Release-läge utan att restora igen
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      # Test-steg — körs även utan tester (då görs ingenting)
+      # När vi lägger till tester senare kommer detta steg automatiskt köra dem
+      - name: Test
+        run: dotnet test --no-build --configuration Release --verbosity normal
