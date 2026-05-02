@@ -54,7 +54,7 @@ Dependencies point inward toward \`Domain\`. \`Domain\` depends on nothing.
 - [x] Solution and Clean Architecture project structure
 - [x] CI pipeline (GitHub Actions)
 - [x] Branch protection on \`main\`
-- [ ] Domain layer — entities and enums
+- [x] Domain layer — entities and enums
 - [ ] Infrastructure — DbContext, configurations, migrations
 - [ ] Application — MediatR, AutoMapper, FluentValidation
 - [ ] CRUD endpoints (Projects, Issues, Tags)
