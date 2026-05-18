@@ -24,6 +24,24 @@ public class TagRepository : ITagRepository
             t => t.Name.ToLower() == name.ToLower(),
             cancellationToken);
 
+    // Materialize the names once so EF translates the Contains call cleanly to SQL `WHERE name = ANY(...)`.
+    public async Task<IReadOnlyList<Tag>> GetByNamesAsync(
+        IEnumerable<string> names,
+        CancellationToken cancellationToken = default)
+    {
+        var nameList = names.ToList();
+
+        // Guard against empty input — avoids a pointless query.
+        if (nameList.Count == 0)
+        {
+            return Array.Empty<Tag>();
+        }
+
+        return await _db.Tags
+            .Where(t => nameList.Contains(t.Name))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<Tag>> GetAllAsync(CancellationToken cancellationToken = default)
         => await _db.Tags
             .AsNoTracking()
@@ -32,6 +50,9 @@ public class TagRepository : ITagRepository
 
     public async Task AddAsync(Tag tag, CancellationToken cancellationToken = default)
         => await _db.Tags.AddAsync(tag, cancellationToken);
+
+    public async Task AddRangeAsync(IEnumerable<Tag> tags, CancellationToken cancellationToken = default)
+        => await _db.Tags.AddRangeAsync(tags, cancellationToken);
 
     public void Remove(Tag tag)
         => _db.Tags.Remove(tag);
