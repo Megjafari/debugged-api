@@ -13,10 +13,10 @@ public interface IIssueRepository
         Guid projectId,
         CancellationToken cancellationToken = default);
 
-    // Core feature: returns RESOLVED issues ranked by relevance.
-    // Scoring = number of shared tags + error message keyword hit.
+    // Core feature: returns RESOLVED issues ranked by relevance, paired with their match score.
+    // Scoring = number of shared tags + 1 if the error message keyword matches.
     // excludeIssueId prevents an existing issue from matching itself.
-    Task<IReadOnlyList<Issue>> FindSimilarResolvedAsync(
+    Task<IReadOnlyList<SimilarIssueResult>> FindSimilarResolvedAsync(
         IEnumerable<Guid> tagIds,
         string? errorMessageKeyword,
         Guid? excludeIssueId = null,
