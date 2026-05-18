@@ -38,44 +38,48 @@ public class IssueRepository : IIssueRepository
     // Core feature: returns RESOLVED issues ranked by relevance.
     // Scoring = number of shared tags + 1 if the error message keyword matches.
     // The query runs entirely in SQL — no in-memory filtering.
-    public async Task<IReadOnlyList<Issue>> FindSimilarResolvedAsync(
-        IEnumerable<Guid> tagIds,
-        string? errorMessageKeyword,
-        Guid? excludeIssueId = null,
-        CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<SimilarIssueResult>> FindSimilarResolvedAsync(
+    IEnumerable<Guid> tagIds,
+    string? errorMessageKeyword,
+    Guid? excludeIssueId = null,
+    CancellationToken cancellationToken = default)
     {
-        var tagIdList = tagIds.ToList();
-        var hasKeyword = !string.IsNullOrWhiteSpace(errorMessageKeyword);
+    var tagIdList = tagIds.ToList();
+    var hasKeyword = !string.IsNullOrWhiteSpace(errorMessageKeyword);
 
-        // No signals to match on — nothing similar.
-        if (tagIdList.Count == 0 && !hasKeyword)
-            return Array.Empty<Issue>();
+    // No signals to match on — nothing similar.
+    if (tagIdList.Count == 0 && !hasKeyword)
+        return Array.Empty<SimilarIssueResult>();
 
-        var query = _db.Issues
-            .AsNoTracking()
-            .Include(i => i.IssueTags)
-                .ThenInclude(it => it.Tag)
-            .Where(i => i.Status == IssueStatus.Resolved);
+    var query = _db.Issues
+        .AsNoTracking()
+        .Include(i => i.IssueTags)
+            .ThenInclude(it => it.Tag)
+        .Where(i => i.Status == IssueStatus.Resolved);
 
-        if (excludeIssueId.HasValue)
-            query = query.Where(i => i.Id != excludeIssueId.Value);
+    if (excludeIssueId.HasValue)
+        query = query.Where(i => i.Id != excludeIssueId.Value);
 
-        // Build the score in the SQL projection so the database does the work.
-        var scored = query.Select(i => new
-        {
-            Issue = i,
-            TagMatches = i.IssueTags.Count(it => tagIdList.Contains(it.TagId)),
-            ErrorMatches = hasKeyword && i.ErrorMessage != null
-                           && EF.Functions.ILike(i.ErrorMessage, $"%{errorMessageKeyword}%")
-                ? 1 : 0
-        })
-        .Where(x => x.TagMatches > 0 || x.ErrorMatches > 0)
-        .OrderByDescending(x => x.TagMatches + x.ErrorMatches)
-        .ThenByDescending(x => x.Issue.ResolvedAt)
-        .Take(10);
+    // Build the score in the SQL projection so the database does the work.
+    var scored = query.Select(i => new
+    {
+        Issue = i,
+        TagMatches = i.IssueTags.Count(it => tagIdList.Contains(it.TagId)),
+        ErrorMatches = hasKeyword && i.ErrorMessage != null
+                       && EF.Functions.ILike(i.ErrorMessage, $"%{errorMessageKeyword}%")
+            ? 1 : 0
+    })
+    .Where(x => x.TagMatches > 0 || x.ErrorMatches > 0)
+    .OrderByDescending(x => x.TagMatches + x.ErrorMatches)
+    .ThenByDescending(x => x.Issue.ResolvedAt)
+    .Take(10);
 
-        var results = await scored.ToListAsync(cancellationToken);
-        return results.Select(x => x.Issue).ToList();
+    var results = await scored.ToListAsync(cancellationToken);
+
+    // Materialize to the application-facing result type, preserving the SQL-computed score.
+    return results
+        .Select(x => new SimilarIssueResult(x.Issue, x.TagMatches + x.ErrorMatches))
+        .ToList();
     }
 
     public async Task AddAsync(Issue issue, CancellationToken cancellationToken = default)
