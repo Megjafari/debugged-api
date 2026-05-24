@@ -53,7 +53,12 @@ public static class DependencyInjection
         var jwtSettings = configuration.GetSection("Jwt").Get<JwtSettings>()
                           ?? throw new InvalidOperationException("Jwt section missing from configuration.");
 
-        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
             .AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters

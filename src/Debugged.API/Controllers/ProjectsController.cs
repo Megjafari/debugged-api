@@ -3,12 +3,14 @@ using Debugged.Application.Features.Projects.Commands.CreateProject;
 using Debugged.Application.Features.Projects.Queries.GetAllProjects;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Debugged.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]
+[Authorize]
 public class ProjectsController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -33,6 +35,7 @@ public class ProjectsController : ControllerBase
     /// <summary>
     /// Creates a new project.
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     [ProducesResponseType(typeof(ProjectDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

@@ -27,11 +27,9 @@ builder.Services.AddSwaggerGen(options =>
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT",
+        Type = SecuritySchemeType.ApiKey,
         In = ParameterLocation.Header,
-        Description = "JWT Authorization header using the Bearer scheme. Paste only the token value (no 'Bearer ' prefix)."
+        Description = "JWT Authorization header. Format: 'Bearer {token}'"
     });
 
     // Apply the Bearer requirement globally — every endpoint accepts the token.
