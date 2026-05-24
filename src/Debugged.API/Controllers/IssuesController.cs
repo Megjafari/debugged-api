@@ -8,11 +8,13 @@ using Debugged.Application.Features.Issues.Queries.GetIssueById;
 using Debugged.Application.Features.Issues.Queries.GetSimilarIssues;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Debugged.API.Controllers;
 
 [ApiController]
 [Produces("application/json")]
+[Authorize]
 public class IssuesController : ControllerBase
 {
     private readonly IMediator _mediator;

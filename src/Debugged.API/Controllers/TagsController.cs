@@ -5,11 +5,13 @@ using Debugged.Application.Features.Tags.Queries.GetAllTags;
 using Debugged.Application.Features.Tags.Queries.GetTagById;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Debugged.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 [Produces("application/json")]
 public class TagsController : ControllerBase
 {
@@ -46,6 +48,7 @@ public class TagsController : ControllerBase
     /// <summary>
     /// Creates a curated tag — used to pre-seed the taxonomy.
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     [ProducesResponseType(typeof(TagDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -60,6 +63,7 @@ public class TagsController : ControllerBase
     /// <summary>
     /// Removes a tag. Linked issues lose the tag via cascade delete on IssueTag rows.
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
