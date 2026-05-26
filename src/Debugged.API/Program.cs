@@ -2,12 +2,19 @@ using Debugged.Application;
 using Debugged.Infrastructure;
 using Debugged.API.Middleware;
 using Microsoft.OpenApi;
+using Debugged.API.Services;
+using Debugged.Application.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Application + Infrastructure layers (CQRS, EF Core, repositories, Identity, JWT).
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// HttpContextAccessor is required by CurrentUserService to read JWT claims.
+// Not registered by default — must be added explicitly.
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 builder.Services.AddControllers();
 

@@ -15,19 +15,22 @@ public class CreateIssueCommandHandler : IRequestHandler<CreateIssueCommand, Iss
     private readonly ITagRepository _tagRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly ICurrentUserService _currentUser;
 
     public CreateIssueCommandHandler(
         IIssueRepository issueRepository,
         IProjectRepository projectRepository,
         ITagRepository tagRepository,
         IUnitOfWork unitOfWork,
-        IMapper mapper)
+        IMapper mapper,
+        ICurrentUserService currentUser)
     {
         _issueRepository = issueRepository;
         _projectRepository = projectRepository;
         _tagRepository = tagRepository;
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _currentUser = currentUser;
     }
 
     public async Task<IssueDto> Handle(CreateIssueCommand request, CancellationToken cancellationToken)
@@ -72,8 +75,9 @@ public class CreateIssueCommandHandler : IRequestHandler<CreateIssueCommand, Iss
             Priority = request.Priority,
             Status = IssueStatus.Open, // New issues always start as Open — clients can't dictate this.
             ProjectId = request.ProjectId,
-            // TODO: set from CurrentUserService once auth is wired up. Placeholder for now.
-            CreatedByUserId = Guid.Empty,
+            // Stamped from the JWT — handler is invoked behind [Authorize], so a userId is always present.
+            // The null-forgiving '!' is safe here: an unauthenticated request would have been rejected by the pipeline.
+            CreatedByUserId = _currentUser.UserId!.Value,
             IssueTags = allTags.Select(tag => new IssueTag { Tag = tag }).ToList()
         };
 
